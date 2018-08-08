@@ -1,0 +1,3 @@
+.eggs
+redfish_client.egg-info
+*.pyc
