@@ -16,6 +16,23 @@ from __future__ import absolute_import, unicode_literals
 
 
 class Resource(object):
+    @staticmethod
+    def _parse_fragment_string(fragment):
+        if fragment:
+            # /my/0/part -> ["my", "0", "part"]
+            return fragment.strip("/").split("/")
+        return []
+
+    @staticmethod
+    def _get_fragment(data, fragment):
+        # data, /my/0/part -> data["my"][0]["part"]
+        for component in Resource._parse_fragment_string(fragment):
+            if isinstance(data, list):
+                data = data[int(component)]
+            else:
+                data = data[component]
+        return data
+
     def __init__(self, connector, oid=None, data=None):
         self._cache = {}
         self._connector = connector
@@ -26,10 +43,15 @@ class Resource(object):
             self._headers = {}
 
     def _init_from_oid(self, oid):
-        resp = self._connector.get(oid)
+        if "#" in oid:
+            url, fragment = oid.split("#", 1)
+        else:
+            url, fragment = oid, ""
+
+        resp = self._connector.get(url)
         if resp.status_code != 200:
             raise Exception(resp.content)
-        return dict(resp.headers), resp.json()
+        return dict(resp.headers), self._get_fragment(resp.json(), fragment)
 
     def _build(self, data):
         if isinstance(data, dict):
