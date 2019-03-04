@@ -85,7 +85,7 @@ class Resource(object):
         resource = self
         for k in keys:
             if k in resource:
-                resource = resurce._get(k)
+                resource = resource._get(k)
             else:
                 return None
         return resource
