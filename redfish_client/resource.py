@@ -155,3 +155,36 @@ class Resource(object):
     @property
     def raw(self):
         return self._content
+
+    def post(self, payload=None):
+        """
+        Perform a POST at the resource with the given payload.
+
+        Args:
+          payload: The contents of the POST payload.
+        """
+        path = self._content.get("@odata.id")
+        if not path:
+            raise MissingOidException("The resource cannot be POSTed to.")
+        return self._connector.post(path, payload=payload)
+
+    def patch(self, payload):
+        """
+        Perform a PATCH at the resource with the given payload.
+
+        Args:
+          payload: The contents of the POST payload.
+        """
+        path = self._content.get("@odata.id")
+        if not path:
+            raise MissingOidException("The resource cannot be PATCHed.")
+        return self._connector.patch(path, payload=payload)
+
+    def delete(self):
+        """
+        Perform a DELETE at the resource.
+        """
+        path = self._content.get("@odata.id")
+        if not path:
+            raise MissingOidException("The resource cannot be DELETEd.")
+        return self._connector.delete(path)
