@@ -17,7 +17,8 @@ from unittest import mock
 import pytest
 
 from redfish_client.connector import Connector, Response
-from redfish_client.exceptions import BlacklistedValueException, TimedOutException
+from redfish_client.exceptions import (BlacklistedValueException,
+    MissingOidException, TimedOutException)
 from redfish_client.resource import Resource
 
 
@@ -104,3 +105,48 @@ class TestWaitFor:
             }).wait_for(["PowerState"], "Off", timeout=0.1)
 
 
+class TestPost:
+    def test_post_on_resource(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/EventService/Subscriptions/"
+        }).post(payload={"Destination": "http://123.10.10.234"})
+        connector.post.assert_called_once_with(
+            "/redfish/v1/EventService/Subscriptions/", payload={"Destination":
+            "http://123.10.10.234"})
+
+    def test_post_on_resource_invalid(self):
+        connector = mock.Mock(spec=Connector)
+        with pytest.raises(MissingOidException):
+            Resource(connector, data={}).post(payload={})
+
+
+class TestDelete:
+    def test_delete_a_resource(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Managers/Steampunk/Accounts/4"
+            }
+        ).delete()
+        connector.delete.assert_called_once_with(
+            "/redfish/v1/Managers/Steampunk/Accounts/4")
+
+    def test_delete_an_invalid_resource(self):
+        connector = mock.Mock(spec=Connector)
+        with pytest.raises(MissingOidException):
+            Resource(connector, data={}).delete()
+
+
+class TestPatch:
+    def test_patch_a_resource(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Systems/1"
+        }).patch(payload={"Misc": "MyValue"})
+        connector.patch.assert_called_once_with(
+            "/redfish/v1/Systems/1", payload={"Misc": "MyValue"})
+
+    def test_patch_an_invalid_resource(self):
+        connector = mock.Mock(spec=Connector)
+        with pytest.raises(MissingOidException):
+            Resource(connector, data={}).patch(payload={"Misc": "MyValue"})
