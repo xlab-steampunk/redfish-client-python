@@ -90,6 +90,25 @@ class Resource(object):
                 return None
         return resource
 
+    def find_object(self, key):
+        """ Recursively search for a key and return key's content """
+        if key in self._content.keys():
+            return self._get(key)
+
+        for k in self._content.keys():
+            if hasattr(self._get(k), "find_object"):
+                result = self._get(k).find_object(key)
+                if result:
+                    return result
+
+    def execute_action(self, action_name, payload):
+        if "Actions" not in self._content:
+            raise KeyError("Element does not have Actions attribute")
+        action = self.Actions.find_object(action_name)
+        if action:
+            return self._connector.post(action.target, payload=payload)
+        raise KeyError("Action with {} does not exist".format(action_name))
+
     @property
     def raw(self):
         return self._content
