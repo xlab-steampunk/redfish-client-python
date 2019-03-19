@@ -111,6 +111,13 @@ class Resource(object):
                     return result
 
     def execute_action(self, action_name, payload):
+        """
+        Perform an action supported by the resource.
+
+        Args:
+          action_name: The field representing the action to perform.
+          payload: The dictionary with the action parameters.
+        """
         if "Actions" not in self._content:
             raise KeyError("Element does not have Actions attribute")
         action = self.Actions.find_object(action_name)
