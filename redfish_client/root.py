@@ -12,32 +12,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-
 from redfish_client.resource import Resource
 
 
 class Root(Resource):
-    def _has_session_support(self):
-        return self._content.get("Links", {}).get("Sessions", False)
-
-    def _session_login(self, username, password):
-        session_path = self._content["Links"]["Sessions"]["@odata.id"]
-        resp = self._connector.post(
-            session_path, payload=dict(UserName=username, Password=password)
+    def login(self):
+        sessions = self._content.get("Links", {}).get("Sessions", {})
+        authenticated_path = next(
+            i["@odata.id"] for i in self._content.values() if "@odata.id" in i
         )
-        self._connector.set_header("x-auth-token",
-                                   resp.headers["x-auth-token"])
-
-    def _basic_login(self, username, password):
-        self._connector.set_header("Authorization",
-                                   basic_auth_header(username, password))
-
-    def login(self, username, password):
-        if self._has_session_support():
-            self._session_login(username, password)
+        if "@odata.id" in sessions:
+            self._connector.set_session_auth_data(sessions["@odata.id"])
         else:
-            self._basic_login(username, password)
+            self._connector.set_basic_auth_data(authenticated_path)
+        self._connector.login()
+
+    def logout(self):
+        self._connector.logout()
 
     def find(self, oid):
         return Resource(self._connector, oid=oid)
