@@ -150,3 +150,6 @@ class Connector:
 
     def delete(self, path):
         return self._request("DELETE", path)
+
+    def reset(self, _path=None):
+        pass
