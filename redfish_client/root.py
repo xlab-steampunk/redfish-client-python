@@ -26,8 +26,8 @@ class Root(Resource):
         resp = self._connector.post(
             session_path, payload=dict(UserName=username, Password=password)
         )
-        self._connector.set_header("X-Auth-Token",
-                                   resp.headers["X-Auth-Token"])
+        self._connector.set_header("x-auth-token",
+                                   resp.headers["x-auth-token"])
 
     def _basic_login(self, username, password):
         self._connector.set_header("Authorization",

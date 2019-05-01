@@ -16,7 +16,7 @@ from unittest import mock
 
 import pytest
 
-from redfish_client import Connector
+from redfish_client.connector import Connector, Response
 from redfish_client.exceptions import BlacklistedValueException, TimedOutException
 from redfish_client.resource import Resource
 
@@ -64,42 +64,41 @@ class TestExecuteAction:
 
 @mock.patch("time.sleep")
 class TestWaitFor:
-    def setup_method(self):
-        self.connector = mock.Mock(spec=Connector)
-        self.connector.get.return_value.status_code = 200
-        self.connector.get.return_value.headers = {}
+    @staticmethod
+    def build_connector(jsons):
+        connector = mock.Mock(spec=Connector)
+        connector.get.side_effect = (Response(200, {}, j, b"") for j in jsons)
+        return connector
 
     def test_wait_for_value(self, mock_sleep):
-        self.connector.get.return_value.json.side_effect = [
+        connector = self.build_connector([
             {"@odata.id": "id", "PowerState": "On"},
             {"@odata.id": "id", "PowerState": "On"},
             {"@odata.id": "id", "PowerState": "Off"}
-        ]
-        assert Resource(self.connector, data={
+        ])
+        assert Resource(connector, data={
             "@odata.id": "id",
             "PowerState": "On"
         }).wait_for(["PowerState"], "Off") is True
 
     def test_wait_for_invalid_value(self, mock_sleep):
-        self.connector.get.return_value.json.side_effect = [
+        connector = self.build_connector([
             {"@odata.id": "id", "PowerState": "On"},
             {"@odata.id": "id", "PowerState": "On"},
             {"@odata.id": "id", "PowerState": "Fail"}
-        ]
+        ])
         with pytest.raises(BlacklistedValueException):
-            Resource(self.connector, data={
+            Resource(connector, data={
                 "@odata.id": "id",
                 "PowerState": "On"
             }).wait_for(["PowerState"], "Off", blacklisted=("Fail", ))
 
     def test_wait_for_timeout(self, mock_sleep):
-        self.connector.get.return_value.json.side_effect = cycle([
+        connector = self.build_connector(cycle([
             {"@odata.id": "id", "PowerState": "On"},
-            {"@odata.id": "id", "PowerState": "On"},
-            {"@odata.id": "id", "PowerState": "On"}
-        ])
+        ]))
         with pytest.raises(TimedOutException):
-            Resource(self.connector, data={
+            Resource(connector, data={
                 "@odata.id": "id",
                 "PowerState": "On"
             }).wait_for(["PowerState"], "Off", timeout=0.1)

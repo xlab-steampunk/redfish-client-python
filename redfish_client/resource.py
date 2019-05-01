@@ -55,9 +55,9 @@ class Resource(object):
             url, fragment = oid, ""
 
         resp = self._connector.get(url)
-        if resp.status_code != 200:
-            raise Exception(resp.content)
-        return dict(resp.headers), self._get_fragment(resp.json(), fragment)
+        if resp.status != 200:
+            raise Exception(resp.raw)
+        return resp.headers, self._get_fragment(resp.json, fragment)
 
     def _build(self, data):
         if isinstance(data, dict):
