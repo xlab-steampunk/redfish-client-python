@@ -1,4 +1,4 @@
-#  Copyright 2018 XLAB d.o.o.
+#  Copyright 2019 XLAB d.o.o.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,13 +13,24 @@
 #  limitations under the License.
 
 from redfish_client.connector import Connector
-from redfish_client.caching_connector import CachingConnector
-from redfish_client.root import Root
 
 
-def connect(base_url, username, password, verify=True, cache=True):
-    klass = CachingConnector if cache else Connector
-    connector = klass(base_url, username, password, verify=verify)
-    root = Root(connector, oid="/redfish/v1")
-    root.login()
-    return root
+class CachingConnector(Connector):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._cache = {}
+
+    def get(self, path):
+        if path in self._cache:
+            return self._cache[path]
+
+        response = super().get(path)
+        if response.status == 200:  # Do not cache failed requests
+            self._cache[path] = response
+        return response
+
+    def reset(self, path=None):
+        if path:
+            self._cache.pop(path, None)
+        else:
+            self._cache = {}

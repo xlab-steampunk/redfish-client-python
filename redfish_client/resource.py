@@ -40,7 +40,6 @@ class Resource(object):
         return data
 
     def __init__(self, connector, oid=None, data=None):
-        self._cache = {}
         self._connector = connector
         if oid:
             self._headers, self._content = self._init_from_oid(oid)
@@ -73,20 +72,20 @@ class Resource(object):
         else:
             return Resource(self._connector, data=data)
 
-    def _refresh_cache(self):
-        self._cache.clear()
-        self._content = self._build_from_hash(self._content).raw
+    def refresh(self):
+        try:
+            oid = self._content["@odata.id"]
+        except KeyError:
+            raise Exception("Cannot refresh resource without @odata.id")
 
-    def _get(self, name):
-        if name not in self._cache:
-            self._cache[name] = self._build(self._content[name])
-        return self._cache[name]
+        self._connector.reset(oid)
+        self._headers, self._content = self._init_from_oid(oid)
 
     def __getattr__(self, name):
-        return self._get(name)
+        return self[name]
 
     def __getitem__(self, name):
-        return self._get(name)
+        return self._build(self._content[name])
 
     def __contains__(self, item):
         return item in self._content
@@ -95,7 +94,7 @@ class Resource(object):
         resource = self
         for k in keys:
             if k in resource:
-                resource = resource._get(k)
+                resource = resource[k]
             else:
                 return None
         return resource
@@ -103,11 +102,11 @@ class Resource(object):
     def find_object(self, key):
         """ Recursively search for a key and return key's content """
         if key in self._content.keys():
-            return self._get(key)
+            return self[key]
 
         for k in self._content.keys():
-            if hasattr(self._get(k), "find_object"):
-                result = self._get(k).find_object(key)
+            if hasattr(self[k], "find_object"):
+                result = self[k].find_object(key)
                 if result:
                     return result
 
@@ -137,7 +136,7 @@ class Resource(object):
                                       "inner object")
         start_time = time.time()
         while time.time() <= start_time + timeout:
-            self._refresh_cache()
+            self.refresh()
             actual_value = reduce(operator.getitem, stat, self._content)
             if actual_value == expected:
                 return True
