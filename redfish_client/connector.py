@@ -14,7 +14,13 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import collections
+import json
+
 import requests
+
+
+Response = collections.namedtuple("Response", "status headers json raw")
 
 
 class Connector(object):
@@ -37,7 +43,15 @@ class Connector(object):
 
     def _request(self, method, path, payload=None):
         args = dict(json=payload) if payload else {}
-        return self._client.request(method, self._url(path), **args)
+        resp = self._client.request(method, self._url(path), **args)
+
+        try:
+            json_data = resp.json()
+        except json.JSONDecodeError:
+            json_data = None
+        headers = dict(resp.headers.lower_items())
+
+        return Response(resp.status_code, headers, json_data, resp.content)
 
     def set_header(self, key, value):
         self._client.headers[key] = value
