@@ -12,14 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-
 from redfish_client.connector import Connector
 from redfish_client.root import Root
 
 
 def connect(base_url, username, password, verify=True):
-    connector = Connector(base_url, verify=verify)
+    connector = Connector(base_url, username, password, verify=verify)
     root = Root(connector, oid="/redfish/v1")
-    root.login(username, password)
+    root.login()
     return root

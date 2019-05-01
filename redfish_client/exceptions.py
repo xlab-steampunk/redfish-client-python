@@ -27,3 +27,7 @@ class BlacklistedValueException(ClientException):
 
 class MissingOidException(ClientException):
     pass
+
+
+class AuthException(ClientException):
+    pass
