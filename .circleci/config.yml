@@ -3,6 +3,10 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.5.7
+        environment:
+          PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
-      - run: echo dummy
+      - run: sudo pip install pipenv
+      - run: make init
+      - run: make test
