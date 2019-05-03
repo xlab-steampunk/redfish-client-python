@@ -12,16 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-
 import operator
 import time
 from functools import reduce
 
-from redfish_client.exceptions import BlacklistedValueException, TimedOutException, MissingOidException
+from redfish_client.exceptions import (
+    BlacklistedValueException,
+    TimedOutException,
+    MissingOidException,
+)
 
 
-class Resource(object):
+class Resource:
     @staticmethod
     def _parse_fragment_string(fragment):
         if fragment:
@@ -61,16 +63,14 @@ class Resource(object):
     def _build(self, data):
         if isinstance(data, dict):
             return self._build_from_hash(data)
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return [self._build(i) for i in data]
-        else:
-            return data
+        return data
 
     def _build_from_hash(self, data):
         if "@odata.id" in data:
             return Resource(self._connector, oid=data["@odata.id"])
-        else:
-            return Resource(self._connector, data=data)
+        return Resource(self._connector, data=data)
 
     def refresh(self):
         try:
@@ -125,7 +125,10 @@ class Resource(object):
             return self._connector.post(action.target, payload=payload)
         raise KeyError("Action with {} does not exist".format(action_name))
 
-    def wait_for(self, stat, expected, blacklisted=None, poll_interval=3, timeout=15):
+    def wait_for(
+            self, stat, expected, blacklisted=None, poll_interval=3,
+            timeout=15,
+    ):
         """
         :param stat: list or tuple of keys
         :param expected: expected value
@@ -139,18 +142,24 @@ class Resource(object):
             FailedError: If value matches one of the fail values
         """
         if "@odata.id" not in self._content:
-            raise MissingOidException("Element does not have '@odata.id' attribute, cannot wait for a stat inside "
-                                      "inner object")
+            raise MissingOidException(
+                "Element does not have '@odata.id' attribute, cannot wait "
+                "for a stat inside inner object"
+            )
         start_time = time.time()
         while time.time() <= start_time + timeout:
             self.refresh()
             actual_value = reduce(operator.getitem, stat, self._content)
             if actual_value == expected:
                 return True
-            elif blacklisted and actual_value in blacklisted:
-                raise BlacklistedValueException("Detected blacklisted value '{}'".format(actual_value))
+            if blacklisted and actual_value in blacklisted:
+                raise BlacklistedValueException(
+                    "Detected blacklisted value '{}'".format(actual_value)
+                )
             time.sleep(poll_interval)
-        raise TimedOutException("Could not wait for stat {} in time".format(stat))
+        raise TimedOutException(
+            "Could not wait for stat {} in time".format(stat)
+        )
 
     @property
     def raw(self):
