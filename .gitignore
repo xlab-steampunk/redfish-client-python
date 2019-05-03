@@ -1,3 +1,7 @@
 .eggs
 redfish_client.egg-info
 *.pyc
+.venv
+.coverage
+htmlcov
+dist
