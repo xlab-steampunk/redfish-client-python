@@ -44,7 +44,7 @@ class Connector:
 
         self._client = requests.Session()
         self._client.verify = verify
-        self._client.headers = Connector.DEFAULT_HEADERS
+        self._client.headers = Connector.DEFAULT_HEADERS.copy()
 
     def _url(self, path):
         return self._base_url + path

@@ -18,6 +18,14 @@ from redfish_client.connector import Connector
 from redfish_client.exceptions import AuthException
 
 
+class TestInit:
+    def test_header_copy(self):
+        c1 = Connector("", "", "")
+        c1._set_header("a", "b")
+        c2 = Connector("", "", "")
+        assert c1._client.headers != c2._client.headers
+
+
 class TestLogin:
     def test_basic_login(self, requests_mock):
         requests_mock.get(
