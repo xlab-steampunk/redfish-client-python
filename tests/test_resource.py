@@ -18,7 +18,7 @@ import pytest
 
 from redfish_client.connector import Connector, Response
 from redfish_client.exceptions import (BlacklistedValueException,
-    MissingOidException, TimedOutException)
+    MissingOidException, TimedOutException, ResourceNotFound)
 from redfish_client.resource import Resource
 
 
@@ -27,6 +27,11 @@ class TestGetKey:
         assert Resource(None, data={
             "ProcessorSummary": {"State": "Enabled"}
         }).ProcessorSummary.State == "Enabled"
+
+    def test_wrong_id(self):
+        connector = mock.Mock(spec=Connector)
+        with pytest.raises(ResourceNotFound):
+            Resource(connector, oid="id", data={})
 
     def test_get_invalid_key(self):
         with pytest.raises(KeyError):
@@ -41,6 +46,11 @@ class TestGetKey:
 class TestExecuteAction:
     def setup_method(self,):
         self.connector = mock.Mock(spec=Connector)
+
+    def test_execute_action_without_actions_key(self):
+        with pytest.raises(KeyError):
+            Resource(self.connector, data={
+            }).execute_action("#ComputerSystem.Reset", "payload")
 
     def test_execute_action(self):
         Resource(self.connector, data={
@@ -70,6 +80,22 @@ class TestWaitFor:
         connector = mock.Mock(spec=Connector)
         connector.get.side_effect = (Response(200, {}, j, b"") for j in jsons)
         return connector
+
+    def test_wait_for_no_oid(self, mock_sleep):
+        with pytest.raises(MissingOidException):
+            Resource(None, data={
+                "PowerState": "On"
+            }).wait_for(["PowerState"], "Off")
+
+    def test_wait_for_refresh_missing_oid(self, mock_sleep):
+        connector = self.build_connector([
+            {"PowerState": "On"},
+        ])
+        with pytest.raises(MissingOidException):
+            Resource(connector, data={
+                "@odata.id": "id",
+                "PowerState": "On"
+            }).wait_for(["PowerState"], "Off")
 
     def test_wait_for_value(self, mock_sleep):
         connector = self.build_connector([

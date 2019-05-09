@@ -20,6 +20,7 @@ from redfish_client.exceptions import (
     BlacklistedValueException,
     TimedOutException,
     MissingOidException,
+    ResourceNotFound
 )
 
 
@@ -57,7 +58,7 @@ class Resource:
 
         resp = self._connector.get(url)
         if resp.status != 200:
-            raise Exception(resp.raw)
+            raise ResourceNotFound(resp.raw)
         return resp.headers, self._get_fragment(resp.json, fragment)
 
     def _build(self, data):
@@ -76,7 +77,7 @@ class Resource:
         try:
             oid = self._content["@odata.id"]
         except KeyError:
-            raise Exception("Cannot refresh resource without @odata.id")
+            raise MissingOidException("Cannot refresh resource without @odata.id")
 
         self._connector.reset(oid)
         self._headers, self._content = self._init_from_oid(oid)

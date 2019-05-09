@@ -15,7 +15,7 @@
 import pytest
 
 from redfish_client.connector import Connector
-from redfish_client.exceptions import AuthException
+from redfish_client.exceptions import AuthException, InaccessibleException
 
 
 class TestInit:
@@ -24,6 +24,10 @@ class TestInit:
         c1._set_header("a", "b")
         c2 = Connector("", "", "")
         assert c1._client.headers != c2._client.headers
+
+    def test_inaccessible_url(self):
+        with pytest.raises(InaccessibleException):
+            Connector("https://inaccessible", "user", "pass").get("/data")
 
 
 class TestLogin:
