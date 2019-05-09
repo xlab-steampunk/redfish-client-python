@@ -18,7 +18,7 @@ import json
 
 import requests
 
-from redfish_client.exceptions import AuthException
+from redfish_client.exceptions import AuthException, InaccessibleException
 
 
 Response = collections.namedtuple("Response", "status headers json raw")
@@ -51,7 +51,11 @@ class Connector:
 
     def _request(self, method, path, payload=None):
         args = dict(json=payload) if payload else {}
-        resp = self._client.request(method, self._url(path), **args)
+        try:
+            resp = self._client.request(method, self._url(path), **args)
+        except requests.exceptions.ConnectionError:
+            raise InaccessibleException(
+                "Endpoint at {} is not accessible".format(self._base_url))
 
         if resp.status_code == 401:
             self.login()

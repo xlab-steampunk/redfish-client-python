@@ -31,3 +31,11 @@ class MissingOidException(ClientException):
 
 class AuthException(ClientException):
     pass
+
+
+class ResourceNotFound(ClientException):
+    pass
+
+
+class InaccessibleException(ClientException):
+    pass
