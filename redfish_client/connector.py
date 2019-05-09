@@ -81,6 +81,14 @@ class Connector:
         if token:
             self._set_header("x-auth-token", token)
 
+    @property
+    def session_auth_data(self):
+        return (
+            self._session_path,
+            self._session_id,
+            self._client.headers.get("x-auth-token"),
+        )
+
     def set_basic_auth_data(self, path):
         self._session_logout()
         self._session_path = None

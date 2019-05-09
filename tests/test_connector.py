@@ -85,6 +85,32 @@ class TestLogin:
             conn.login()
 
 
+class TestSessionAuthData:
+    def test_no_data(self):
+        conn = Connector("", "", "")
+        assert (None, None, None) == conn.session_auth_data
+
+    def test_no_active_session(self):
+        conn = Connector("", "", "")
+        conn.set_session_auth_data("/sessions")
+        assert ("/sessions", None, None) == conn.session_auth_data
+
+    def test_active_session(self, requests_mock):
+        requests_mock.post(
+            "http://demo.site/sessions", status_code=201,
+            headers={"x-auth-token": "xyz", "Location": "/sessions/1"},
+        )
+        conn = Connector("http://demo.site", "", "")
+        conn.set_session_auth_data("/sessions")
+        conn.login()
+        assert ("/sessions", "/sessions/1", "xyz") == conn.session_auth_data
+
+    def test_user_supplied_session_data(self):
+        conn = Connector("", "", "")
+        conn.set_session_auth_data("/sessions", "/sessions/2", "dfg")
+        assert ("/sessions", "/sessions/2", "dfg") == conn.session_auth_data
+
+
 class TestLogout:
     def test_basic_logout(self, requests_mock):
         conn = Connector("https://demo.dev", "user", "pass")
