@@ -200,6 +200,38 @@ class TestGet:
         assert r.status == 200
         assert r.json is None
 
+    def test_get_session_relogin_delete_bad_token_header(self, requests_mock):
+        # The steps that are executed during this test:
+        #  1. Issue GET request to /data endpoint and get back 401.
+        #  2. Remove auth token from headers
+        #  3. POST to session endpoint and get back 201.
+        #  4. Issue GET request to /data endpoint and get bac 200.
+        #
+        # If the header would not be removed, the steps executed would be:
+        #  1. Issue GET request to /data endpoint and get back 401.
+        #  2. POST to session endpoint and get back 401.
+        #  3. Auth exception is raised.
+        #
+        # This is why we mocked the POST request twice: to test that the
+        # token is not present. And because mocked endpoints are matched in
+        # LIFO order, the test works as described before.
+        requests_mock.get("https://demo.dev/data", [
+            dict(status_code=401), dict(status_code=200),
+        ])
+        requests_mock.post(
+            "https://demo.dev/sessions", status_code=201,
+            headers={"X-Auth-Token": "123", "Location": "/sessions/3"},
+        )
+        requests_mock.post(
+            "https://demo.dev/sessions", status_code=401,
+            request_headers={"x-auth-token": "abc"},
+        )
+        conn = Connector("https://demo.dev", "user", "pass")
+        conn.set_session_auth_data("/sessions", token="abc")
+        r = conn.get("/data")
+        assert r.status == 200
+        assert r.json is None
+
     def test_get_use_existing_session(self, requests_mock):
         requests_mock.get(
             "https://demo.dev/data", status_code=200,
