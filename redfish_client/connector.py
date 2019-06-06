@@ -58,6 +58,7 @@ class Connector:
                 "Endpoint at {} is not accessible".format(self._base_url))
 
         if resp.status_code == 401:
+            self._unset_header("x-auth-token")
             self.login()
             resp = self._client.request(method, self._url(path), **args)
 
