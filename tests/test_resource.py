@@ -31,7 +31,7 @@ class TestGetKey:
     def test_wrong_id(self):
         connector = mock.Mock(spec=Connector)
         with pytest.raises(ResourceNotFound):
-            Resource(connector, oid="id", data={})
+            Resource(connector, oid="id", data={}).raw
 
     def test_get_invalid_key(self):
         with pytest.raises(KeyError):
@@ -176,3 +176,71 @@ class TestPatch:
         connector = mock.Mock(spec=Connector)
         with pytest.raises(MissingOidException):
             Resource(connector, data={}).patch(payload={"Misc": "MyValue"})
+
+
+class TestRefresh:
+    def test_refresh_eager_resource(self):
+        connector = mock.Mock(spec=Connector)
+        connector.get.return_value = mock.MagicMock(status=200, json={
+            "@odata.id": "id",
+            "a": "val",
+        })
+        r = Resource(connector, oid="id", lazy=False)  # first GET
+        r.refresh()                                    # second GET
+        assert not r._is_stub
+        assert r._content == {"@odata.id": "id", "a": "val"}
+        assert connector.get.call_count == 2
+
+    def test_refresh_lazy_resource(self):
+        connector = mock.Mock(spec=Connector)
+        r = Resource(connector, oid="id")
+        r.refresh()
+        assert r._is_stub
+        assert r._content == {"@odata.id": "id"}
+        assert connector.get.call_count == 0
+
+
+class TestLazyResource:
+    def test_not_loaded_on_initialization(self):
+        connector = mock.Mock(spec=Connector)
+        r = Resource(connector, oid="id")
+        assert r._is_lazy
+        assert r._is_stub
+        assert connector.get.call_count == 0
+
+    def test_loaded_on_first_access_only(self):
+        connector = mock.Mock(spec=Connector)
+        connector.get.return_value = mock.MagicMock(status=200, json={
+            "@odata.id": "id",
+            "a": "val",
+        })
+
+        r = Resource(connector, oid="id")
+        r.a
+        r.a
+        assert r._is_lazy
+        assert not r._is_stub
+        assert connector.get.call_count == 1
+
+    def test_load_only_accessed_child(self):
+        connector = mock.Mock(spec=Connector)
+        connector.get.return_value = mock.MagicMock(status=200, json={
+            "@odata.id": "parent",
+            "Members": [
+                {"@odata.id": "child_0"},
+                {"@odata.id": "child_1"},
+            ],
+        })
+        parent = Resource(connector, oid="parent")
+        child_0 = parent.Members[0]
+        child_1 = parent.Members[1]
+
+        child_0.raw  # access the first child
+
+        assert child_0._is_lazy
+        assert child_1._is_lazy
+        assert not child_0._is_stub
+        assert child_1._is_stub
+        assert len(connector.get.call_args_list) == 2
+        assert connector.get.call_args_list[0][0] == ("parent",)
+        assert connector.get.call_args_list[1][0] == ("child_0",)

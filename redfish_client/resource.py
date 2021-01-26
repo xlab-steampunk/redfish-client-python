@@ -42,10 +42,15 @@ class Resource:
                 data = data[component]
         return data
 
-    def __init__(self, connector, oid=None, data=None):
+    def __init__(self, connector, oid=None, data=None, lazy=True):
         self._connector = connector
+        self._is_lazy = lazy
+        self._is_stub = lazy
         if oid:
-            self._headers, self._content = self._init_from_oid(oid)
+            if self._is_lazy:
+                self._headers, self._content = {}, {"@odata.id": oid}
+            else:
+                self._headers, self._content = self._init_from_oid(oid)
         else:
             self._content = data
             self._headers = {}
@@ -59,6 +64,7 @@ class Resource:
         resp = self._connector.get(url)
         if resp.status != 200:
             raise ResourceNotFound(resp.raw)
+        self._is_stub = False
         return resp.headers, self._get_fragment(resp.json, fragment)
 
     def _build(self, data):
@@ -70,8 +76,10 @@ class Resource:
 
     def _build_from_hash(self, data):
         if "@odata.id" in data:
-            return Resource(self._connector, oid=data["@odata.id"])
-        return Resource(self._connector, data=data)
+            return Resource(
+                self._connector, oid=data["@odata.id"], lazy=self._is_lazy
+            )
+        return Resource(self._connector, data=data, lazy=self._is_lazy)
 
     def refresh(self):
         try:
@@ -80,16 +88,27 @@ class Resource:
             raise MissingOidException("Cannot refresh resource without @odata.id")
 
         self._connector.reset(oid)
-        self._headers, self._content = self._init_from_oid(oid)
+
+        if self._is_lazy:
+            self._headers, self._content = {}, {"@odata.id": oid}
+            self._is_stub = True
+        else:
+            self._headers, self._content = self._init_from_oid(oid)
 
     def __getattr__(self, name):
         return self[name]
 
     def __getitem__(self, name):
-        return self._build(self._content[name])
+        return self._build(self._get_content()[name])
 
     def __contains__(self, item):
-        return item in self._content
+        return item in self._get_content()
+
+    def _get_content(self):
+        oid = self._content.get("@odata.id")
+        if oid and self._is_lazy and self._is_stub:
+            self._headers, self._content = self._init_from_oid(oid)
+        return self._content
 
     def dig(self, *keys):
         resource = self
@@ -102,10 +121,10 @@ class Resource:
 
     def find_object(self, key):
         """ Recursively search for a key and return key's content """
-        if key in self._content.keys():
+        if key in self._get_content().keys():
             return self[key]
 
-        for k in self._content.keys():
+        for k in self._get_content().keys():
             if hasattr(self[k], "find_object"):
                 result = self[k].find_object(key)
                 if result:
@@ -119,7 +138,7 @@ class Resource:
           action_name: The field representing the action to perform.
           payload: The dictionary with the action parameters.
         """
-        if "Actions" not in self._content:
+        if "Actions" not in self._get_content():
             raise KeyError("Element does not have Actions attribute")
         action = self.Actions.find_object(action_name)
         if action:
@@ -150,7 +169,7 @@ class Resource:
         start_time = time.time()
         while time.time() <= start_time + timeout:
             self.refresh()
-            actual_value = reduce(operator.getitem, stat, self._content)
+            actual_value = reduce(operator.getitem, stat, self._get_content())
             if actual_value == expected:
                 return True
             if blacklisted and actual_value in blacklisted:
@@ -164,7 +183,7 @@ class Resource:
 
     @property
     def raw(self):
-        return self._content
+        return self._get_content()
 
     def post(self, payload=None):
         """
