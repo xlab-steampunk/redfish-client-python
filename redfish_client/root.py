@@ -17,9 +17,10 @@ from redfish_client.resource import Resource
 
 class Root(Resource):
     def login(self):
-        sessions = self._content.get("Links", {}).get("Sessions", {})
+        content = self._get_content()
+        sessions = content.get("Links", {}).get("Sessions", {})
         authenticated_path = next(
-            i["@odata.id"] for i in self._content.values() if "@odata.id" in i
+            i["@odata.id"] for i in content.values() if "@odata.id" in i
         )
         if "@odata.id" in sessions:
             self._connector.set_session_auth_data(sessions["@odata.id"])
@@ -31,4 +32,4 @@ class Root(Resource):
         self._connector.logout()
 
     def find(self, oid):
-        return Resource(self._connector, oid=oid)
+        return Resource(self._connector, oid=oid, lazy=self._is_lazy)
