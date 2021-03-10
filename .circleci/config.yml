@@ -1,12 +1,24 @@
-version: 2
+version: "2.1"
+
+workflows:
+  version: 2
+  main_workflow:
+    jobs:
+      - unit_test:
+          matrix:
+            parameters:
+              python: [ "3.6", "3.7", "3.8", "3.9" ]
+
 jobs:
-  build:
+  unit_test:
+    parameters:
+      python:
+        description: cimg/python image tag
+        type: string
     docker:
-      - image: circleci/python:3.5.7
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
+      - image: cimg/python:<< parameters.python >>
     steps:
       - checkout
-      - run: sudo pip install pipenv
-      - run: make init
-      - run: make test
+      - run: pip install pytest requests-mock
+      - run: pip install .
+      - run: pytest tests
