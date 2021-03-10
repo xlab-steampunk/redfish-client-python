@@ -31,8 +31,9 @@ class Connector:
         "Accept": "application/json",
         "OData-Version": "4.0"
     }
+    DEFAULT_TIMEOUT = 1  # In seconds
 
-    def __init__(self, base_url, username, password, verify=True):
+    def __init__(self, base_url, username, password, verify=True, timeout=DEFAULT_TIMEOUT):
         self._base_url = base_url.rstrip("/")
         self._username = username
         self._password = password
@@ -45,6 +46,7 @@ class Connector:
         self._client = requests.Session()
         self._client.verify = verify
         self._client.headers = Connector.DEFAULT_HEADERS.copy()
+        self._timeout = timeout
 
     def _url(self, path):
         return self._base_url + path
@@ -52,7 +54,7 @@ class Connector:
     def _request(self, method, path, payload=None):
         args = dict(json=payload) if payload else {}
         try:
-            resp = self._client.request(method, self._url(path), **args)
+            resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
         except requests.exceptions.ConnectionError:
             raise InaccessibleException(
                 "Endpoint at {} is not accessible".format(self._base_url))
@@ -60,7 +62,7 @@ class Connector:
         if resp.status_code == 401:
             self._unset_header("x-auth-token")
             self.login()
-            resp = self._client.request(method, self._url(path), **args)
+            resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
 
         try:
             json_data = resp.json()
@@ -107,7 +109,7 @@ class Connector:
     def _session_login(self):
         resp = self._client.post(self._url(self._session_path), json=dict(
             UserName=self._username, Password=self._password,
-        ))
+        ), timeout=self._timeout)
         if resp.status_code != 201:
             raise AuthException("Cannot create session: {}".format(resp.text))
 
@@ -120,7 +122,7 @@ class Connector:
 
     def _session_logout(self):
         if self._session_id:
-            self._client.delete(self._url(self._session_id))
+            self._client.delete(self._url(self._session_id), timeout=self._timeout)
             self._session_id = None
         self._unset_header("x-auth-token")
 
@@ -130,6 +132,7 @@ class Connector:
         ).decode("ascii"))
         resp = self._client.get(
             self._url(self._basic_path), headers=dict(authorization=secret),
+            timeout=self._timeout
         )
         if resp.status_code != 200:
             raise AuthException("Invalid credentials")
