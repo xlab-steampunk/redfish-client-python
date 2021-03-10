@@ -18,9 +18,9 @@ from redfish_client.root import Root
 
 
 def connect(base_url, username, password, verify=True, cache=True,
-            lazy_load=True):
+            lazy_load=True, timeout=Connector.DEFAULT_TIMEOUT):
     klass = CachingConnector if cache else Connector
-    connector = klass(base_url, username, password, verify=verify)
+    connector = klass(base_url, username, password, verify=verify, timeout=timeout)
     root = Root(connector, oid="/redfish/v1", lazy=lazy_load)
     root.login()
     return root
