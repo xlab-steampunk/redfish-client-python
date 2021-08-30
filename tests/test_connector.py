@@ -278,6 +278,15 @@ class TestPost:
         status, *_ = conn.post("/post", dict(post="payload"))
         assert status == 200
 
+    def test_post_empty_payload(self, requests_mock):
+        requests_mock.post(
+            "https://demo.dev/post", status_code=200,
+            additional_matcher=lambda r: r.json() == {}
+        )
+        conn = Connector("https://demo.dev", None, None)
+        status, *_ = conn.post("/post", dict())
+        assert status == 200
+
 
 class TestPatch:
     def test_patch_no_payload(self, requests_mock):
@@ -293,6 +302,15 @@ class TestPatch:
         )
         conn = Connector("https://demo.dev", None, None)
         status, *_ = conn.patch("/patch", dict(patch="payload"))
+        assert status == 200
+
+    def test_patch_empty_payload(self, requests_mock):
+        requests_mock.patch(
+            "https://demo.dev/patch", status_code=200,
+            additional_matcher=lambda r: r.json() == {}
+        )
+        conn = Connector("https://demo.dev", None, None)
+        status, *_ = conn.patch("/patch", dict())
         assert status == 200
 
 

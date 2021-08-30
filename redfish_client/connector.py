@@ -52,7 +52,7 @@ class Connector:
         return self._base_url + path
 
     def _request(self, method, path, payload=None):
-        args = dict(json=payload) if payload else {}
+        args = dict(json=payload) if payload is not None else {}
         try:
             resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
         except requests.exceptions.ConnectionError:
