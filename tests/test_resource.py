@@ -33,6 +33,9 @@ class TestGetKey:
         with pytest.raises(ResourceNotFound):
             Resource(connector, oid="id", data={}).raw
 
+    def test_wrong_id_without_fail_oid(self):
+        assert Resource(None, oid="id", data={})["@odata.id"] == "id"
+
     def test_get_invalid_key(self):
         with pytest.raises(KeyError):
             Resource(None, data={}).Invalid_key

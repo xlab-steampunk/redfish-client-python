@@ -99,6 +99,8 @@ class Resource:
         return self[name]
 
     def __getitem__(self, name):
+        if name in self._content:
+            return self._build(self._content[name])
         return self._build(self._get_content()[name])
 
     def __contains__(self, item):
