@@ -210,6 +210,18 @@ class Resource:
         if not path:
             raise MissingOidException("The resource cannot be PATCHed.")
         return self._connector.patch(path, payload=payload)
+    
+    def put(self, payload):
+        """
+        Perform a PUT at the resource with the given payload.
+
+        Args:
+          payload: The contents of the PUT payload.
+        """
+        path = self._content.get("@odata.id")
+        if not path:
+            raise MissingOidException("The resource cannot be PUT.")
+        return self._connector.put(path, payload=payload)
 
     def delete(self):
         """

@@ -181,6 +181,21 @@ class TestPatch:
             Resource(connector, data={}).patch(payload={"Misc": "MyValue"})
 
 
+class TestPut:
+    def test_put_a_resource(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Systems/1"
+        }).put(payload={"Misc": "MyValue"})
+        connector.put.assert_called_once_with(
+            "/redfish/v1/Systems/1", payload={"Misc": "MyValue"})
+
+    def test_put_an_invalid_resource(self):
+        connector = mock.Mock(spec=Connector)
+        with pytest.raises(MissingOidException):
+            Resource(connector, data={}).put(payload={"Misc": "MyValue"})
+
+
 class TestRefresh:
     def test_refresh_eager_resource(self):
         connector = mock.Mock(spec=Connector)

@@ -314,6 +314,17 @@ class TestPatch:
         assert status == 200
 
 
+class TestPut:
+    def test_put_with_payload(self, requests_mock):
+        requests_mock.put(
+            "https://demo.dev/put", status_code=200,
+            additional_matcher=lambda r: r.json()["put"] == "payload",
+        )
+        conn = Connector("https://demo.dev", None, None)
+        status, *_ = conn.put("/put", dict(put="payload"))
+        assert status == 200
+
+
 class TestDelete:
     def test_delete(self, requests_mock):
         requests_mock.delete("https://demo.dev/delete", status_code=204)

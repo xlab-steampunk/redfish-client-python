@@ -164,6 +164,9 @@ class Connector:
     def patch(self, path, payload=None):
         return self._request("PATCH", path, payload=payload)
 
+    def put(self, path, payload=None):
+        return self._request("PUT", path, payload=payload)
+
     def delete(self, path):
         return self._request("DELETE", path)
 
