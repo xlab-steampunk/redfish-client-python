@@ -186,6 +186,11 @@ class Resource:
     @property
     def raw(self):
         return self._get_content()
+    
+    def _get_path(self, field, path):
+        if path is None:
+            return field
+        return path
 
     def post(self, payload=None):
         """
@@ -211,14 +216,15 @@ class Resource:
             raise MissingOidException("The resource cannot be PATCHed.")
         return self._connector.patch(path, payload=payload)
     
-    def put(self, payload):
+    def put(self, path=None, payload=None):
         """
         Perform a PUT at the resource with the given payload.
 
         Args:
           payload: The contents of the PUT payload.
         """
-        path = self._content.get("@odata.id")
+        field = self._content.get("@odata.id")
+        path = self._get_path(field, path)
         if not path:
             raise MissingOidException("The resource cannot be PUT.")
         return self._connector.put(path, payload=payload)
