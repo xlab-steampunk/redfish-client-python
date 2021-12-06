@@ -190,6 +190,14 @@ class TestPut:
         connector.put.assert_called_once_with(
             "/redfish/v1/Systems/1", payload={"Misc": "MyValue"})
 
+    def test_put_a_resource_with_path(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Systems/1"
+        }).put(path="/redfish/v1/custom/path", payload={"Misc": "MyValue"})
+        connector.put.assert_called_once_with(
+            "/redfish/v1/custom/path", payload={"Misc": "MyValue"})
+
     def test_put_an_invalid_resource(self):
         connector = mock.Mock(spec=Connector)
         with pytest.raises(MissingOidException):
