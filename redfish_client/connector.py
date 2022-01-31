@@ -66,7 +66,7 @@ class Connector:
 
         try:
             json_data = resp.json()
-        except json.JSONDecodeError:
+        except ValueError:
             json_data = None
         headers = dict(resp.headers.lower_items())
 
