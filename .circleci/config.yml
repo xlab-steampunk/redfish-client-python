@@ -19,6 +19,6 @@ jobs:
       - image: cimg/python:<< parameters.python >>
     steps:
       - checkout
-      - run: pip install pytest requests-mock
+      - run: pip install pytest requests-mock pytest-mock
       - run: pip install .
       - run: pytest tests

@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 import pytest
 
 from redfish_client.connector import Connector
@@ -362,3 +363,51 @@ class TestReset:
         conn.reset("/2")
         assert conn.get("/1").json == dict(hello="bear")
         assert conn.get("/2").json == dict(solong="bear")
+
+
+class TestLogging:
+    def test_logging_get(self, mocker, requests_mock):
+        logging_debug_mock = mocker.patch.object(logging.Logger, 'debug')
+        logging_error_mock = mocker.patch.object(logging.Logger, 'error')
+        requests_mock.get("https://demo.dev/1", [
+            dict(status_code=200, json=dict(hello="fish")),
+            dict(status_code=200, json=dict(hello="bear")),
+        ])
+        conn = Connector("https://demo.dev", "user", "pass")
+        conn.get("/1")
+
+        logging_error_mock.assert_not_called()
+        logging_debug_mock.assert_has_calls(
+            [
+                mocker.call('{"request": {"method": "GET", "path": "/1", "payload": null}}'),
+                mocker.call('GET https://demo.dev/1 200'),
+                mocker.call('{"request_data": {"method": "GET", "path": "/1"}, '
+                            '"response": {"status_code": 200, "headers": {}, '
+                                '"content": "b\'{\\"hello\\": \\"fish\\"}\'", '
+                                '"json_data": {"hello": "fish"}}'
+                            '}')
+            ]
+        )
+
+    def test_logging_post(self, mocker, requests_mock):
+        logging_debug_mock = mocker.patch.object(logging.Logger, 'debug')
+        logging_error_mock = mocker.patch.object(logging.Logger, 'error')
+        requests_mock.post("https://demo.dev/1", [
+            dict(status_code=200, json=dict(hello="fish")),
+            dict(status_code=200, json=dict(hello="bear")),
+        ])
+        conn = Connector("https://demo.dev", "user", "pass")
+        conn.post("/1", payload=dict(iam="cat"))
+
+        logging_error_mock.assert_not_called()
+        logging_debug_mock.assert_has_calls(
+            [
+                mocker.call('{"request": {"method": "POST", "path": "/1", "payload": {"iam": "cat"}}}'),
+                mocker.call('POST https://demo.dev/1 200'),
+                mocker.call('{"request_data": {"method": "POST", "path": "/1"}, '
+                            '"response": {"status_code": 200, "headers": {}, '
+                                '"content": "b\'{\\"hello\\": \\"fish\\"}\'", '
+                                '"json_data": {"hello": "fish"}}'
+                            '}')
+            ]
+        )

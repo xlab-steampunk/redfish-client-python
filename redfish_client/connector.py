@@ -15,12 +15,14 @@
 import base64
 import collections
 import json
+import logging
 
 import requests
 
 from redfish_client.exceptions import AuthException, InaccessibleException
 
 
+logger = logging.getLogger('redfish-client')
 Response = collections.namedtuple("Response", "status headers json raw")
 
 
@@ -51,7 +53,37 @@ class Connector:
     def _url(self, path):
         return self._base_url + path
 
+    def _log_request(self, method, path, payload):
+        try:
+            logger.debug(json.dumps(dict(
+                request=dict(
+                    method=method,
+                    path=path,
+                    payload=payload
+                )
+            )))
+        except Exception as e:
+            logger.error(e)
+
+    def _log_response(self, method, path, response, json_data):
+        try:
+            logger.debug(json.dumps(dict(
+                request_data=dict(
+                    method=method,
+                    path=path
+                ),
+                response=dict(
+                    status_code=response.status_code,
+                    headers=dict(response.headers.lower_items()),
+                    content=str(response.content),
+                    json_data=json_data
+                )
+            )))
+        except Exception as e:
+            logger.error(e)
+
     def _request(self, method, path, payload=None):
+        self._log_request(method, path, payload)
         args = dict(json=payload) if payload is not None else {}
         try:
             resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
@@ -68,6 +100,7 @@ class Connector:
             json_data = resp.json()
         except ValueError:
             json_data = None
+        self._log_response(method, path, resp, json_data)
         headers = dict(resp.headers.lower_items())
 
         return Response(resp.status_code, headers, json_data, resp.content)
