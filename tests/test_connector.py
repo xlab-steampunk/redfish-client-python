@@ -379,9 +379,13 @@ class TestLogging:
         logging_error_mock.assert_not_called()
         logging_debug_mock.assert_has_calls(
             [
-                mocker.call('{"request": {"method": "GET", "path": "/1", "payload": null}}'),
+                mocker.call('{"request": {'
+                                '"method": "GET", "base_url": "https://demo.dev", '
+                                '"path": "/1", "payload": null}'
+                            '}'),
                 mocker.call('GET https://demo.dev/1 200'),
-                mocker.call('{"request_data": {"method": "GET", "path": "/1"}, '
+                mocker.call('{"request_data": '
+                            '{"method": "GET", "base_url": "https://demo.dev", "path": "/1"}, '
                             '"response": {"status_code": 200, "headers": {}, '
                                 '"content": "b\'{\\"hello\\": \\"fish\\"}\'", '
                                 '"json_data": {"hello": "fish"}}'
@@ -402,9 +406,13 @@ class TestLogging:
         logging_error_mock.assert_not_called()
         logging_debug_mock.assert_has_calls(
             [
-                mocker.call('{"request": {"method": "POST", "path": "/1", "payload": {"iam": "cat"}}}'),
+                mocker.call('{"request": {'
+                                '"method": "POST", "base_url": "https://demo.dev", '
+                                '"path": "/1", "payload": {"iam": "cat"}}'
+                            '}'),
                 mocker.call('POST https://demo.dev/1 200'),
-                mocker.call('{"request_data": {"method": "POST", "path": "/1"}, '
+                mocker.call('{"request_data": '
+                            '{"method": "POST", "base_url": "https://demo.dev", "path": "/1"}, '
                             '"response": {"status_code": 200, "headers": {}, '
                                 '"content": "b\'{\\"hello\\": \\"fish\\"}\'", '
                                 '"json_data": {"hello": "fish"}}'

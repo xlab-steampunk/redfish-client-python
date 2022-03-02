@@ -58,6 +58,7 @@ class Connector:
             logger.debug(json.dumps(dict(
                 request=dict(
                     method=method,
+                    base_url=self._base_url,
                     path=path,
                     payload=payload
                 )
@@ -70,6 +71,7 @@ class Connector:
             logger.debug(json.dumps(dict(
                 request_data=dict(
                     method=method,
+                    base_url=self._base_url,
                     path=path
                 ),
                 response=dict(
