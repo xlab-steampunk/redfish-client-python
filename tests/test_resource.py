@@ -45,6 +45,15 @@ class TestGetKey:
             "ProcessorSummary": {"State": "Enabled"}
         }).dig("ProcessorSummary", "State") == "Enabled"
 
+    def test_keys_in_dir(self):
+        res = Resource(None,data={
+            "ProcessorSummary": {"State": "Enabled"},
+            "@odata.dummy": "Dummy",
+        })
+        assert "ProcessorSummary" in dir(res)
+        assert "@odata.dummy" not in dir(res)
+        assert "dig" in dir(res)
+        assert "_get_content" not in dir(res)
 
 class TestExecuteAction:
     def setup_method(self,):

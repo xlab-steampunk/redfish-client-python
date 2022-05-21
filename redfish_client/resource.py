@@ -55,6 +55,12 @@ class Resource:
             self._content = data
             self._headers = {}
 
+    def __dir__(self):
+        result = [key for key in super().__dir__() if not key.startswith("_")]
+        if self._content:
+            result += [key for key in self._content.keys() if not key.startswith("@")]
+        return result
+
     def _init_from_oid(self, oid):
         if "#" in oid:
             url, fragment = oid.split("#", 1)
