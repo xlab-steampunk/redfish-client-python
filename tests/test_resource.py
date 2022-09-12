@@ -38,6 +38,10 @@ class TestGetKey:
 
     def test_get_invalid_key(self):
         with pytest.raises(KeyError):
+            Resource(None, data={})['Invalid_key']
+
+    def test_get_invalid_attribute(self):
+        with pytest.raises(AttributeError):
             Resource(None, data={}).Invalid_key
 
     def test_dig(self):
