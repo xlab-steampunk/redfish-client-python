@@ -102,7 +102,10 @@ class Resource:
             self._headers, self._content = self._init_from_oid(oid)
 
     def __getattr__(self, name):
-        return self[name]
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(f"Redfish Resource does not have attribute 'name'")
 
     def __getitem__(self, name):
         if name in self._content:
