@@ -41,8 +41,8 @@ class TestGetKey:
             Resource(None, data={})['Invalid_key']
 
     def test_get_invalid_attribute(self):
-        with pytest.raises(AttributeError):
-            Resource(None, data={}).Invalid_key
+        with pytest.raises(AttributeError, match=".+ 'Invalid_Attribute'"):
+            Resource(None, data={}).Invalid_Attribute
 
     def test_dig(self):
         assert Resource(None, data={

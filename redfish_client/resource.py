@@ -105,7 +105,7 @@ class Resource:
         try:
             return self[name]
         except KeyError:
-            raise AttributeError(f"Redfish Resource does not have attribute 'name'")
+            raise AttributeError(f"Redfish Resource does not have attribute '{name}'")
 
     def __getitem__(self, name):
         if name in self._content:
