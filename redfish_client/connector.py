@@ -16,6 +16,7 @@ import base64
 import collections
 import json
 import logging
+from urllib.parse import urlparse
 
 import requests
 
@@ -151,9 +152,12 @@ class Connector:
         self._set_header("x-auth-token", resp.headers["x-auth-token"])
         # We combine with `or` here because the default value of the dict.get
         # method is eagerly evaluated, which is not what we want.
-        self._session_id = (
-            resp.headers.get("location") or resp.json()["@odata.id"]
-        )
+        sess_id = resp.headers.get("location") or resp.json()["@odata.id"]
+        try:
+            sess_id = urlparse(sess_id).path
+        except BaseException:
+            pass
+        self._session_id = sess_id
 
     def _session_logout(self):
         if self._session_id:
