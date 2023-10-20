@@ -154,8 +154,21 @@ class TestPost:
             "@odata.id": "/redfish/v1/EventService/Subscriptions/"
         }).post(payload={"Destination": "http://123.10.10.234"})
         connector.post.assert_called_once_with(
-            "/redfish/v1/EventService/Subscriptions/", payload={"Destination":
-            "http://123.10.10.234"})
+            "/redfish/v1/EventService/Subscriptions/",
+            payload={"Destination": "http://123.10.10.234"},
+            headers=None
+        )
+
+    def test_post_on_resource_custom_header(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/EventService/Subscriptions/"
+        }).post(payload={"Destination": "http://123.10.10.234"}, headers={"Custom": "Header"})
+        connector.post.assert_called_once_with(
+            "/redfish/v1/EventService/Subscriptions/",
+            payload={"Destination": "http://123.10.10.234"},
+            headers={"Custom": "Header"}
+        )
 
     def test_post_on_resource_invalid(self):
         connector = mock.Mock(spec=Connector)
@@ -171,7 +184,20 @@ class TestDelete:
             }
         ).delete()
         connector.delete.assert_called_once_with(
-            "/redfish/v1/Managers/Steampunk/Accounts/4")
+            "/redfish/v1/Managers/Steampunk/Accounts/4",
+            headers=None
+        )
+
+    def test_delete_a_resource_custom_header(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Managers/Steampunk/Accounts/4"
+            }
+        ).delete(headers={"Custom": "Header"})
+        connector.delete.assert_called_once_with(
+            "/redfish/v1/Managers/Steampunk/Accounts/4",
+            headers={"Custom": "Header"}
+        )
 
     def test_delete_an_invalid_resource(self):
         connector = mock.Mock(spec=Connector)
@@ -186,7 +212,21 @@ class TestPatch:
             "@odata.id": "/redfish/v1/Systems/1"
         }).patch(payload={"Misc": "MyValue"})
         connector.patch.assert_called_once_with(
-            "/redfish/v1/Systems/1", payload={"Misc": "MyValue"})
+            "/redfish/v1/Systems/1",
+            payload={"Misc": "MyValue"},
+            headers=None
+        )
+
+    def test_patch_a_resource_custom_header(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Systems/1"
+        }).patch(payload={"Misc": "MyValue"}, headers={"Custom": "Header"})
+        connector.patch.assert_called_once_with(
+            "/redfish/v1/Systems/1",
+            payload={"Misc": "MyValue"},
+            headers={"Custom": "Header"}
+        )
 
     def test_patch_an_invalid_resource(self):
         connector = mock.Mock(spec=Connector)
@@ -201,7 +241,21 @@ class TestPut:
             "@odata.id": "/redfish/v1/Systems/1"
         }).put(payload={"Misc": "MyValue"})
         connector.put.assert_called_once_with(
-            "/redfish/v1/Systems/1", payload={"Misc": "MyValue"})
+            "/redfish/v1/Systems/1",
+            payload={"Misc": "MyValue"},
+            headers=None
+        )
+
+    def test_put_a_resource_custom_header(self):
+        connector = mock.Mock(spec=Connector)
+        Resource(connector, data={
+            "@odata.id": "/redfish/v1/Systems/1"
+        }).put(payload={"Misc": "MyValue"}, headers={"Custom": "Header"})
+        connector.put.assert_called_once_with(
+            "/redfish/v1/Systems/1",
+            payload={"Misc": "MyValue"},
+            headers={"Custom": "Header"}
+        )
 
     def test_put_a_resource_with_path(self):
         connector = mock.Mock(spec=Connector)
@@ -209,7 +263,10 @@ class TestPut:
             "@odata.id": "/redfish/v1/Systems/1"
         }).put(path="/redfish/v1/custom/path", payload={"Misc": "MyValue"})
         connector.put.assert_called_once_with(
-            "/redfish/v1/custom/path", payload={"Misc": "MyValue"})
+            "/redfish/v1/custom/path",
+            payload={"Misc": "MyValue"},
+            headers=None
+        )
 
     def test_put_an_invalid_resource(self):
         connector = mock.Mock(spec=Connector)

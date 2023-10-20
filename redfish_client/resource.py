@@ -201,7 +201,7 @@ class Resource:
             return field
         return path
 
-    def post(self, payload=None):
+    def post(self, payload=None, headers=None):
         """
         Perform a POST at the resource with the given payload.
 
@@ -211,9 +211,9 @@ class Resource:
         path = self._content.get("@odata.id")
         if not path:
             raise MissingOidException("The resource cannot be POSTed to.")
-        return self._connector.post(path, payload=payload)
+        return self._connector.post(path, payload=payload, headers=headers)
 
-    def patch(self, payload):
+    def patch(self, payload, headers=None):
         """
         Perform a PATCH at the resource with the given payload.
 
@@ -223,9 +223,9 @@ class Resource:
         path = self._content.get("@odata.id")
         if not path:
             raise MissingOidException("The resource cannot be PATCHed.")
-        return self._connector.patch(path, payload=payload)
+        return self._connector.patch(path, payload=payload, headers=headers)
 
-    def put(self, path=None, payload=None):
+    def put(self, path=None, payload=None, headers=None):
         """
         Perform a PUT at the resource or selected path with the given payload.
 
@@ -237,13 +237,13 @@ class Resource:
         path = self._get_path(field, path)
         if not path:
             raise MissingOidException("The resource cannot be PUT.")
-        return self._connector.put(path, payload=payload)
+        return self._connector.put(path, payload=payload, headers=headers)
 
-    def delete(self):
+    def delete(self, headers=None):
         """
         Perform a DELETE at the resource.
         """
         path = self._content.get("@odata.id")
         if not path:
             raise MissingOidException("The resource cannot be DELETEd.")
-        return self._connector.delete(path)
+        return self._connector.delete(path, headers=headers)

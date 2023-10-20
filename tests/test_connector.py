@@ -381,7 +381,7 @@ class TestLogging:
             [
                 mocker.call('{"request": {'
                                 '"method": "GET", "base_url": "https://demo.dev", '
-                                '"path": "/1", "payload": null}'
+                                '"path": "/1", "payload": null, "headers": null}'
                             '}'),
                 mocker.call('GET https://demo.dev/1 200'),
                 mocker.call('{"request_data": '
@@ -408,7 +408,7 @@ class TestLogging:
             [
                 mocker.call('{"request": {'
                                 '"method": "POST", "base_url": "https://demo.dev", '
-                                '"path": "/1", "payload": {"iam": "cat"}}'
+                                '"path": "/1", "payload": {"iam": "cat"}, "headers": null}'
                             '}'),
                 mocker.call('POST https://demo.dev/1 200'),
                 mocker.call('{"request_data": '
