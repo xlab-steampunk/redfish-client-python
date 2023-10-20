@@ -54,14 +54,15 @@ class Connector:
     def _url(self, path):
         return self._base_url + path
 
-    def _log_request(self, method, path, payload):
+    def _log_request(self, method, path, payload, headers):
         try:
             logger.debug(json.dumps(dict(
                 request=dict(
                     method=method,
                     base_url=self._base_url,
                     path=path,
-                    payload=payload
+                    payload=payload,
+                    headers=headers,
                 )
             )))
         except Exception as e:
@@ -85,11 +86,17 @@ class Connector:
         except Exception as e:
             logger.error(e)
 
-    def _request(self, method, path, payload=None):
-        self._log_request(method, path, payload)
+    def _request(self, method, path, payload=None, headers=None):
+        self._log_request(method, path, payload, headers)
         args = dict(json=payload) if payload is not None else {}
         try:
-            resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
+            resp = self._client.request(
+                method,
+                self._url(path),
+                **args,
+                headers=headers,
+                timeout=self._timeout
+            )
         except requests.exceptions.ConnectionError:
             raise InaccessibleException(
                 "Endpoint at {} is not accessible".format(self._base_url))
@@ -97,16 +104,22 @@ class Connector:
         if resp.status_code == 401:
             self._unset_header("x-auth-token")
             self.login()
-            resp = self._client.request(method, self._url(path), **args, timeout=self._timeout)
+            resp = self._client.request(
+                method,
+                self._url(path),
+                **args,
+                headers=headers,
+                timeout=self._timeout
+            )
 
         try:
             json_data = resp.json()
         except ValueError:
             json_data = None
         self._log_response(method, path, resp, json_data)
-        headers = dict(resp.headers.lower_items())
+        resp_headers = dict(resp.headers.lower_items())
 
-        return Response(resp.status_code, headers, json_data, resp.content)
+        return Response(resp.status_code, resp_headers, json_data, resp.content)
 
     def _set_header(self, key, value):
         self._client.headers[key] = value
@@ -197,17 +210,17 @@ class Connector:
     def get(self, path):
         return self._request("GET", path)
 
-    def post(self, path, payload=None):
-        return self._request("POST", path, payload=payload)
+    def post(self, path, payload=None, headers=None):
+        return self._request("POST", path, payload=payload, headers=headers)
 
-    def patch(self, path, payload=None):
-        return self._request("PATCH", path, payload=payload)
+    def patch(self, path, payload=None, headers=None):
+        return self._request("PATCH", path, payload=payload, headers=headers)
 
-    def put(self, path, payload=None):
-        return self._request("PUT", path, payload=payload)
+    def put(self, path, payload=None, headers=None):
+        return self._request("PUT", path, payload=payload, headers=headers)
 
-    def delete(self, path):
-        return self._request("DELETE", path)
+    def delete(self, path, headers=None):
+        return self._request("DELETE", path, headers=None)
 
     def reset(self, _path=None):
         pass
